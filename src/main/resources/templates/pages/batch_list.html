@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <meta charset="utf-8">
+    <title>layuiAdmin 控制台主页一</title>
+    <meta name="renderer" content="webkit">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=0">
+    <link rel="stylesheet" href="/layuiadmin/layui/css/layui.css" media="all">
+    <link rel="stylesheet" href="/layuiadmin/style/admin.css" media="all">
+</head>
+<body>
+
+<div class="layui-card layadmin-header">
+    <div class="layui-breadcrumb" lay-filter="breadcrumb">
+        <a lay-href="">主页</a>
+        <a><cite>组件</cite></a>
+        <a><cite>数据表格</cite></a>
+        <a><cite>简单用法</cite></a>
+    </div>
+</div>
+
+<!--表格主体-->
+<div class="layui-fluid">
+    <div class="layui-row layui-col-space15">
+        <div class="layui-col-md12">
+            <div class="layui-card">
+                <div class="layui-card-header">批次管理</div>
+                <div class="layui-card-body">
+                    <div class="demoTable">
+                        搜索批次名：
+                        <div class="layui-inline">
+                            <input class="layui-input" name="batch_name" id="batch_name" autocomplete="off">
+                        </div>
+                        <button class="layui-btn" id="search_batch_name">搜索</button>
+                    </div>
+                    <table class="layui-hide" id="batch_list" lay-filter="batch_list"></table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!--批次添加弹窗-->
+<div id="batchAddDialog" class="layui-form" style="display: none; padding: 20px" lay-filter="batchAddForm">
+    <div class="layui-form-item">
+        <label class="layui-form-label">批次名</label>
+        <div class="layui-input-block">
+            <input type="text" name="name" autocomplete="off" class="layui-input">
+        </div>
+    </div>
+    <div class="layui-form-item">
+        <label class="layui-form-label">申请时间</label>
+        <div class="layui-input-block">
+            <input type="text" name="applicationDate" id="dateApply" class="layui-input">
+        </div>
+    </div>
+    <div class="layui-form-item">
+        <label class="layui-form-label">选衣时间</label>
+        <div class="layui-input-block">
+            <input type="text" name="registDate" id="dateChoose" class="layui-input">
+        </div>
+    </div>
+    <div class="layui-form-item">
+        <label class="layui-form-label">困难等级</label>
+        <div class="layui-input-block">
+            <select name="difficultyLevel">
+                <option value="BKN">不困难</option>
+                <option value="YBKN">一般困难</option>
+                <option value="TSKN">特殊困难</option>
+            </select>
+        </div>
+    </div>
+    <div class="layui-form-item">
+        <div class="layui-input-block">
+            <button type="button" class="layui-btn" lay-submit lay-filter="batchSave">立即提交</button>
+            <button type="reset" class="layui-btn layui-btn-primary">重置</button>
+        </div>
+    </div>
+</div>
+
+<!--表头工具栏-->
+<script type="text/html" id="toolbar_head">
+    <div class="layui-btn-container">
+        <button class="layui-btn layui-btn-sm" lay-event="addBatch">新建批次</button>
+        <button class="layui-btn layui-btn-sm layui-btn-danger" lay-event="deleteChosen">删除选中</button>
+        <button class="layui-btn layui-btn-sm layui-btn-normal" lay-event="export">导出</button>
+    </div>
+</script>
+
+<!--列工具栏-->
+<script type="text/html" id="toolbar_col">
+    <div class="layui-btn-container">
+        <button class="layui-btn layui-btn-sm" lay-event="edit">编辑</button>
+        <button class="layui-btn layui-btn-sm layui-btn-danger" lay-event="delete">删除</button>
+    </div>
+</script>
+
+<script src="/layuiadmin/layui/layui.js"></script>
+<!-- 注意：如果你直接复制所有代码到本地，上述 JS 路径需要改成你本地的 -->
+<script>
+    layui.config({
+            base: '/layuiadmin/' //静态资源所在路径
+        }).extend({
+            index: 'lib/index'//主入口模块
+        })
+        .use(['table', 'index', 'laydate'], function(){
+            const $ = layui.$;
+
+            /**
+             * laydate代码
+             */
+            const laydate = layui.laydate;
+            laydate.render({
+                elem: '#dateApply',
+                range: true
+            });
+            laydate.render({
+                elem: '#dateChoose',
+                range: true
+            });
+
+            /**
+             * form代码
+             */
+            const form = layui.form;
+            form.on('submit(batchSave)', function (obj){
+                layer.load(); // 提交时加载，防止保存多次
+                const applicationDates = obj.field.applicationDate.split(" - ");
+                const registDates = obj.field.registDate.split(" - ");
+                obj.field.applicationStartDate = applicationDates[0];
+                obj.field.applicationEndDate = applicationDates[1];
+                obj.field.registerStartDate = registDates[0];
+                obj.field.registerEndDate = registDates[1];
+                $.ajax({
+                    type: 'post',
+                    url: '/batchSetting/save',
+                    data: obj.field,
+                    dataType: 'json',
+                    success: function (res) {
+                        if(res.data){
+                            //表示插入成功
+                            layer.msg("保存成功",{icon: 6,time: 1500},function () {
+                                //成功的回调
+                                //1.关闭弹框
+                                //----如何清空表单
+                                //把困难等级从数据库进行渲染
+                                layer.closeAll()
+                                //2.重新加载数据
+                                table.reload('batch_list', {
+                                    url: '/batchSetting/list'
+                                });
+                            })
+                        }
+                    }
+                })
+            })
+
+
+            /**
+             * table代码
+             */
+            const table = layui.table;
+            table.render({
+                elem: '#batch_list',
+                url: '/batchSetting/list',
+                /**
+                 * 3. 表头
+                 */
+                toolbar: '#toolbar_head',
+                /**
+                 * 2. 从54 - 73 均为分页配置
+                 */
+                even: true,
+                page: {
+                    prev: '上一页',
+                    next: '下一页',
+                    layout: ['limit', 'count', 'prev', 'page', 'next', 'skip'],
+                    limits: [10, 20, 50, 100],
+                    limit: 10
+                },
+                request: {
+                    pageName: 'pageNo',
+                    limitName: 'pageSize'
+                },
+                parseData: function (res) {
+                    return{
+                        "code": res.code,
+                        "msg": res.message,
+                        "count": res.data.total,
+                        "data": res.data.records
+                    };
+                },
+
+                /**
+                 * 1. 列设计模块： cellMinWidth + cols
+                 */
+                cellMinWidth: 80, //全局定义常规单元格的最小宽度，layui 2.2.1 新增
+                cols: [
+                    [
+                        {type: 'checkbox', fixed: 'left'},
+                        {field:'id',title: 'ID', sort: true}
+                        ,{field:'name', title: '批次名'}
+                        ,{field:'applicationStartDate', title: '开始日期'}
+                        ,{field:'applicationEndDate', title: '结束日期'}
+                        ,{field:'registerStartDate', title: '注册开始日期', minWidth: 100} //minWidth：局部定义当前单元格的最小宽度，layui 2.2.1 新增
+                        ,{field:'registerEndDate', title: '注册结束日期'}
+                        ,{field:'difficultyLevel', title: '困难等级'}
+                        ,{field:'right', title: '操作', toolbar: '#toolbar_col'}
+                    ]
+                ],
+            });
+            table.on('toolbar(batch_list)', function (obj){
+                /**
+                 * 头部工具栏事件,on参数中的batch_list必须在table标签中加入一个属性lay-filter
+                 */
+                let checkStatus = table.checkStatus(obj.config.id);
+                switch (obj.event) {
+                    case 'addBatch':
+                        showBatchAddDialog();
+                        break;
+                    case 'deleteChosen':
+                        deleteChosenBatch(checkStatus.data);
+                        break;
+                    case 'export':
+                        console.log("ss");
+                        break;
+                }
+            })
+            table.on('tool(batch_list)', function (obj){
+                /**
+                 * 列工具栏事件,on参数中的batch_list必须在table标签中加入一个属性lay-filter
+                 */
+                if(obj.event === 'edit') {
+                    console.log("ss");
+                }
+                if(obj.event === 'delete') {
+                    deleteBatch(obj.data);
+                }
+            })
+
+            /**
+             * 函数代码
+             */
+            function showBatchAddDialog(){
+                /**
+                 * 打开新建批次的弹窗
+                 */
+                layer.open({
+                    type: 1,
+                    offset: '200px',
+                    area: ['600px', '500px'],
+                    content: $('#batchAddDialog'),
+                    closeBtn: 1
+                });
+            }
+            function deleteBatch(data) {
+                /**
+                 * 删除一条数据
+                 */
+                layer.confirm("确认删除该条数据吗？",{icon: 3},function () {
+                    $.ajax({
+                        type: "delete",
+                        url: '/batchSetting/delete/' + data.id,
+                        dataType: 'json',
+                        success: function (res) {
+                            if(res.data){
+                                layer.msg("删除成功",{icon: 6,time: 1500},function () {
+                                    layer.closeAll()
+                                    table.reload('batch_list', {
+                                        url: '/batchSetting/list'
+                                    });
+                                })
+                            }
+                        }
+                    })
+                })
+            }
+            function deleteChosenBatch(data) {
+                /**
+                 * 删除选定数据
+                 */
+                if(data.length == 0) {
+                    layer.msg("请至少选择一条数据",{icon: 6,time: 1500});
+                    return;
+                }
+                let ids = new Array()
+                $(data).each(function (index, item) {
+                    ids.push(item.id)
+                })
+                layer.confirm("确认删除选中的数据吗？",{icon: 3},function () {
+                    $.ajax({
+                        type: "delete",
+                        url: '/batchSetting/deletes',
+                        data: {ids: ids},
+                        dataType: 'json',
+                        success: function (res) {
+                            if(res.data){
+                                layer.msg("删除成功",{icon: 6,time: 1500},function () {
+                                    layer.closeAll()
+                                    table.reload('batch_list', {
+                                        url: '/batchSetting/list'
+                                    });
+                                })
+                            }
+                        }
+                    })
+                })
+            }
+            $('#search_batch_name').bind('click', function () {
+                /**
+                 * 搜索功能
+                 */
+                table.reload('batch_list', {
+                    url: '/batchSetting/list'
+                    , where: {
+                        /**
+                         * 有条件的重载
+                         */
+                        batchName: $("#batch_name").val()
+                    }
+                });
+            })
+        });
+</script>
+
+</body>
+</html>

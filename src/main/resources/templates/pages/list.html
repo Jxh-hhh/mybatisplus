@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>批次设置</title>
+    <meta name="renderer" content="webkit">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=0">
+    <link rel="stylesheet" href="/layuiadmin/layui/css/layui.css" media="all">
+    <link rel="stylesheet" href="/layuiadmin/style/admin.css" media="all">
+</head>
+<body>
+
+<div class="layui-card layadmin-header">
+    <div class="layui-breadcrumb" lay-filter="breadcrumb">
+        <a lay-href="">主页</a>
+        <a><cite>组件</cite></a>
+        <a><cite>数据表格</cite></a>
+        <a><cite>简单用法</cite></a>
+    </div>
+</div>
+
+<div class="layui-fluid">
+    <div class="layui-row layui-col-space15">
+        <div class="layui-col-md12">
+            <div class="layui-card">
+                <div class="layui-card-header">赋值已知数据</div>
+                <div class="layui-card-body">
+                    <div class="demoTable">
+                        搜索ID：
+                        <div class="layui-inline">
+                            <input class="layui-input" name="name" id="bname" autocomplete="off">
+                        </div>
+                        <button class="layui-btn" id="demoReload">搜索</button>
+                    </div>
+                    <table class="layui-hide" id="batchList" lay-filter="batchList"></table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!--批次添加弹框-->
+<form class="layui-form" id="batchAddDialog" style="display: none;padding: 20px">
+    <div class="layui-form-item">
+        <label class="layui-form-label">名字</label>
+        <div class="layui-input-block">
+            <input type="text" name="name" lay-verify="title" autocomplete="off" placeholder="请输入标题"
+                   class="layui-input">
+        </div>
+    </div>
+
+    <div class="layui-form-item">
+        <label class="layui-form-label">申请时间</label>
+        <div class="layui-input-block">
+            <input type="text" name="applicationDate" id="test6" class="layui-input">
+        </div>
+    </div>
+    <div class="layui-form-item">
+        <label class="layui-form-label">选衣时间</label>
+        <div class="layui-input-block">
+            <input type="text" name="registDate" id="test7" class="layui-input">
+        </div>
+    </div>
+    <div class="layui-form-item">
+        <label class="layui-form-label">困难等级</label>
+        <div class="layui-input-block">
+            <select id="difficultyLevel" name="difficultyLevel" lay-filter="aihao">
+            </select>
+        </div>
+    </div>
+    <div class="layui-form-item">
+        <div class="layui-input-block">
+            <button type="button" class="layui-btn" lay-submit lay-filter="batchSave">立即提交</button>
+            <button type="reset" class="layui-btn layui-btn-primary">重置</button>
+        </div>
+    </div>
+</form>
+<!--表头工具栏-->
+<script type="text/html" id="tableHead">
+    <div class="layui-btn-container">
+        <button class="layui-btn layui-btn-sm" lay-event="addBatch">新建批次</button>
+        <button class="layui-btn layui-btn-sm layui-btn-danger" lay-event="deletes">删除选中</button>
+        <button class="layui-btn layui-btn-sm layui-btn-normal" lay-event="export">导出</button>
+    </div>
+</script>
+<!--列工具栏-->
+<script type="text/html" id="tableCol">
+    <div class="layui-btn-container">
+        <button class="layui-btn layui-btn-sm" lay-event="getCheckData">编辑</button>
+        <button class="layui-btn layui-btn-sm layui-btn-danger" lay-event="delete">删除</button>
+        <button class="layui-btn layui-btn-sm" lay-event="isAll">详情</button>
+    </div>
+</script>
+<script src="/layuiadmin/layui/layui.js"></script>
+<script>
+    layui.config({
+        base: '/layuiadmin/' //静态资源所在路径
+    }).extend({
+        index: 'lib/index' //主入口模块
+    }).use(['index', 'table', 'laydate'], function () {
+        var table = layui.table, form = layui.form;
+        var $ = layui.$
+        var laydate = layui.laydate;
+        //页面加载时获取数据
+        $.ajax({
+            type: 'get',
+            url: '/dictionary/listByType?type=DIFFICULTY',
+            dataType: "json",
+            success: function (res) {
+                $(res.data).each(function (index,item) {
+                    var $option = $("<option value='"+item.itemValue+"'>"+item.itemName+"</option>")
+                    $("#difficultyLevel").append($option)
+                })
+            }
+        })
+        //渲染时间
+        laydate.render({
+            elem: '#test6'
+            , range: true //或 range: '~' 来自定义分割字符
+        });
+        laydate.render({
+            elem: '#test7'
+            , range: true //或 range: '~' 来自定义分割字符
+        });
+        //展示已知数据
+        table.render({
+            elem: '#batchList',
+            toolbar: '#tableHead',
+            url: "/batchSetting/list",
+            request: {
+                pageName: 'pageNo' //页码的参数名称，默认：page
+                , limitName: 'pageSize' //每页数据量的参数名，默认：limit
+            },
+            parseData: function (res) { //res 即为原始返回的数据
+                return {
+                    "code": res.code, //解析接口状态
+                    "msg": res.message, //解析提示文本
+                    "count": res.data.total, //解析数据长度
+                    "data": res.data.records //解析数据列表
+                };
+            },
+            cols: [
+                [ //标题栏
+                    {type:'checkbox'},
+                    {field: 'id', title: 'ID'}
+                    , {field: 'name', title: '批次名'}
+                    , {field: 'applicationStartDate', title: '申请开始时间', minWidth: 150}
+                    , {field: 'applicationEndDate', title: '签名', minWidth: 160}
+                    , {field: 'registerStartDate', title: '性别'}
+                    , {field: 'registerEndDate', title: '城市'}
+                    , {field: 'difficultyLevel', title: '积分'},
+                    {fixed: 'right', title: '操作', toolbar: '#tableCol', width: 180}
+                ]
+            ]
+            //,skin: 'line' //表格风格
+            , even: true
+            , page: {
+                prev: '上一页',
+                layout: ['limit', 'count', 'prev', 'page', 'next', 'skip']
+            } //是否显示分页
+            , limits: [10, 20, 50, 100]
+            , limit: 10 //每页默认显示的数量
+        });
+
+        //点击搜索
+        $("#demoReload").click(function () {
+            table.reload('batchList', {
+                url: '/batchSetting/list'
+                , where: {
+                    name: $("#bname").val()
+                } //设定异步数据接口的额外参数
+                //,height: 300
+            });
+        })
+        // 头部工具栏事件
+        table.on('toolbar(batchList)', function (obj) {
+            var checkStatus = table.checkStatus(obj.config.id);
+            switch (obj.event) {
+                case 'addBatch':
+                    showDialog();
+                    break;
+                case 'deletes':
+                    deletesEvent();
+                    break;
+                case 'export':
+                    layer.msg('导出');
+                    break;
+            }
+            ;
+        });
+
+        //列工具栏
+        table.on("tool(batchList)",function (obj) {
+            var data = obj.data; //获得当前行数据
+            var layEvent = obj.event; //获得 lay-event 对应的值（也可以是表头的 event 参数对应的值）
+            if(layEvent === 'delete'){ //删除
+                deleteEvent(data)
+            }
+        })
+        //批量删除
+        function deletesEvent() {
+            var checkStatus = table.checkStatus('batchList'); //idTest 即为基础参数 id 对应的值
+
+            if(checkStatus.data.length == 0){
+                layer.msg("请至少选择一条数据",{icon: 6,time: 1500})
+            }else{
+                var ids = new Array()
+                $(checkStatus.data).each(function (index, item) {
+                    ids.push(item.id)
+                })
+                layer.confirm("确认删除选中的信息吗？",{icon: 3},function () {
+                    $.ajax({
+                        type: "get",
+                        url: '/batchSetting/deletes',
+                        data: {ids: ids},
+                        dataType: 'json',
+                        success: function (res) {
+                            if(res.data){
+                                //表示插入成功
+                                layer.msg("保存成功",{icon: 6,time: 1500},function () {
+                                    //成功的回调
+                                    //1.关闭弹框
+                                    //----如何清空表单
+                                    //把困难等级从数据库进行渲染
+                                    layer.closeAll()
+                                    //2.重新加载数据
+                                    table.reload('batchList', {
+                                        url: '/batchSetting/list'
+                                    });
+                                })
+                            }
+                        }
+                    })
+                })
+            }
+        }
+        //单个删除事件
+        function deleteEvent(data) {
+            layer.confirm("确认删除该条信息吗？",{icon: 3},function () {
+                $.ajax({
+                    type: "delete",
+                    url: '/batchSetting/'+data.id,
+                    dataType: 'json',
+                    success: function (res) {
+                        if(res.data){
+                            //表示插入成功
+                            layer.msg("保存成功",{icon: 6,time: 1500},function () {
+                                //成功的回调
+                                //1.关闭弹框
+                                //----如何清空表单
+                                //把困难等级从数据库进行渲染
+                                layer.closeAll()
+                                //2.重新加载数据
+                                table.reload('batchList', {
+                                    url: '/batchSetting/list'
+                                    , where: {
+
+                                    }
+                                });
+                            })
+                        }
+                    }
+                })
+            })
+        }
+        
+        //打开添加批次弹框（必须保证弹框中没有原来的数据）
+        function showDialog() {
+            $("#batchAddDialog")[0].reset()
+            layer.open({
+                type: 1,
+                offset: '200px',
+                area: ['600px', '500px'],
+                content: $('#batchAddDialog') //这里content是一个DOM，注意：最好该元素要存放在body最外层，否则可能被其它的相对元素所影响
+            });
+        }
+
+        //点击批次提交
+        form.on('submit(batchSave)', function (obj) {
+            layer.load()
+            var applicationDates = obj.field.applicationDate.split(" - ");
+            var registDates = obj.field.registDate.split(" - ");
+            obj.field.applicationStartDate = applicationDates[0]
+            obj.field.applicationEndDate = applicationDates[1]
+            obj.field.registerStartDate = registDates[0]
+            obj.field.registerEndDate = registDates[1]
+            $.ajax({
+                type: 'post',
+                url: '/batchSetting/save',
+                data: obj.field,
+                dataType: 'json',
+                success: function (res) {
+                    if(res.data){
+                        //表示插入成功
+                        layer.msg("保存成功",{icon: 6,time: 1500},function () {
+                            //成功的回调
+                            //1.关闭弹框
+                            //----如何清空表单
+                            //把困难等级从数据库进行渲染
+                            layer.closeAll()
+                            //2.重新加载数据
+                            table.reload('batchList', {
+                                url: '/batchSetting/list'
+                                , where: {
+
+                                }
+                            });
+                        })
+                    }
+                }
+            })
+        })
+    });
+</script>
+</body>
+</html>
