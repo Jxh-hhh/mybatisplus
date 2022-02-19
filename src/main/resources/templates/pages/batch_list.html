@@ -66,11 +66,7 @@
     <div class="layui-form-item">
         <label class="layui-form-label">困难等级</label>
         <div class="layui-input-block">
-            <select name="difficultyLevel">
-                <option value="BKN">不困难</option>
-                <option value="YBKN">一般困难</option>
-                <option value="TSKN">特殊困难</option>
-            </select>
+            <select id="difficultySelect" name="difficultyLevel" lay-filter="difficultySelect"></select>
         </div>
     </div>
     <div class="layui-form-item">
@@ -99,7 +95,6 @@
 </script>
 
 <script src="/layuiadmin/layui/layui.js"></script>
-<!-- 注意：如果你直接复制所有代码到本地，上述 JS 路径需要改成你本地的 -->
 <script>
     layui.config({
             base: '/layuiadmin/' //静态资源所在路径
@@ -136,7 +131,7 @@
                 obj.field.registerEndDate = registDates[1];
                 $.ajax({
                     type: 'post',
-                    url: '/batchSetting/save',
+                    url: '/batchSetting',
                     data: obj.field,
                     dataType: 'json',
                     success: function (res) {
@@ -150,7 +145,8 @@
                                 layer.closeAll()
                                 //2.重新加载数据
                                 table.reload('batch_list', {
-                                    url: '/batchSetting/list'
+                                    url: '/batchSetting',
+                                    method: 'get'
                                 });
                             })
                         }
@@ -165,7 +161,8 @@
             const table = layui.table;
             table.render({
                 elem: '#batch_list',
-                url: '/batchSetting/list',
+                url: '/batchSetting',
+                method: 'get',
                 /**
                  * 3. 表头
                  */
@@ -200,14 +197,19 @@
                 cellMinWidth: 80, //全局定义常规单元格的最小宽度，layui 2.2.1 新增
                 cols: [
                     [
+                        /**
+                         * todo: 现在的编辑模块可修改：
+                         * 1. 添加验证规则 或
+                         * 2. 改成event事件
+                         */
                         {type: 'checkbox', fixed: 'left'},
                         {field:'id',title: 'ID', sort: true}
-                        ,{field:'name', title: '批次名'}
-                        ,{field:'applicationStartDate', title: '开始日期'}
-                        ,{field:'applicationEndDate', title: '结束日期'}
-                        ,{field:'registerStartDate', title: '注册开始日期', minWidth: 100} //minWidth：局部定义当前单元格的最小宽度，layui 2.2.1 新增
-                        ,{field:'registerEndDate', title: '注册结束日期'}
-                        ,{field:'difficultyLevel', title: '困难等级'}
+                        ,{field:'name', title: '批次名', edit: 'text'}
+                        ,{field:'applicationStartDate', title: '开始日期', edit: 'text'}
+                        ,{field:'applicationEndDate', title: '结束日期', edit: 'text'}
+                        ,{field:'registerStartDate', title: '注册开始日期', minWidth: 100, edit: 'text'} //minWidth：局部定义当前单元格的最小宽度，layui 2.2.1 新增
+                        ,{field:'registerEndDate', title: '注册结束日期', edit: 'text'}
+                        ,{field:'difficultyLevel', title: '困难等级', edit: 'text'}
                         ,{field:'right', title: '操作', toolbar: '#toolbar_col'}
                     ]
                 ],
@@ -234,12 +236,45 @@
                  * 列工具栏事件,on参数中的batch_list必须在table标签中加入一个属性lay-filter
                  */
                 if(obj.event === 'edit') {
-                    console.log("ss");
+                    layer.msg("直接点击表格即可修改!")
                 }
                 if(obj.event === 'delete') {
                     deleteBatch(obj.data);
+                    return;
                 }
             })
+            table.on('edit(batch_list)', function (obj) {
+                /**
+                 * 监听表格编辑，是否更新该条数据
+                 */
+                layer.confirm("确认修改该条数据吗？",{icon: 3},function () {
+                    $.ajax({
+                        type: "put",
+                        url: '/batchSetting',
+                        data: {
+                            id: obj.data.id,
+                            [obj.field]: obj.value
+                        },
+                        dataType: 'json',
+                        success: function (res) {
+                            if(res.data){
+                                layer.msg("修改成功",{icon: 6,time: 1500},function () {
+                                    layer.closeAll()
+                                    table.reload('batch_list', {
+                                        url: '/batchSetting'
+                                    });
+                                })
+                            }
+                        }
+                    })
+                })
+            })
+
+            /**
+             * 加载困难等级
+             */
+            loadDifficulty();
+
 
             /**
              * 函数代码
@@ -263,14 +298,14 @@
                 layer.confirm("确认删除该条数据吗？",{icon: 3},function () {
                     $.ajax({
                         type: "delete",
-                        url: '/batchSetting/delete/' + data.id,
+                        url: '/batchSetting/' + data.id,
                         dataType: 'json',
                         success: function (res) {
                             if(res.data){
                                 layer.msg("删除成功",{icon: 6,time: 1500},function () {
                                     layer.closeAll()
                                     table.reload('batch_list', {
-                                        url: '/batchSetting/list'
+                                        url: '/batchSetting'
                                     });
                                 })
                             }
@@ -301,7 +336,7 @@
                                 layer.msg("删除成功",{icon: 6,time: 1500},function () {
                                     layer.closeAll()
                                     table.reload('batch_list', {
-                                        url: '/batchSetting/list'
+                                        url: '/batchSetting'
                                     });
                                 })
                             }
@@ -309,12 +344,30 @@
                     })
                 })
             }
+            function loadDifficulty() {
+                /**
+                 * 异步请求difficulty
+                 */
+                $.ajax({
+                    type: "get",
+                    url: '/dictionary/difficulty',
+                    dataType: 'json',
+                    success: function (res) {
+                        if(res.data){
+                            $.each(res.data, function (index, item){
+                                $("#difficultySelect").append(new Option(item.itemName, item.itemName));
+                            })
+                            form.render('select');
+                        }
+                    }
+                })
+            }
             $('#search_batch_name').bind('click', function () {
                 /**
                  * 搜索功能
                  */
                 table.reload('batch_list', {
-                    url: '/batchSetting/list'
+                    url: '/batchSetting'
                     , where: {
                         /**
                          * 有条件的重载

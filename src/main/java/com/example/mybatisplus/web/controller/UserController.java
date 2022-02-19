@@ -44,51 +44,5 @@ public class UserController {
         }
         return JsonResponse.success(res);
     }
-    /**
-    * 描述：根据Id 查询
-    *
-    */
-    @RequestMapping(value = "/{id}", method = RequestMethod.GET)
-    @ResponseBody
-    public JsonResponse getById(@PathVariable("id") Long id)throws Exception {
-        User  user =  userService.getById(id);
-        return JsonResponse.success(user);
-    }
-
-    /**
-    * 描述：根据Id删除
-    *
-    */
-    @RequestMapping(value = "/{id}", method = RequestMethod.DELETE)
-    @ResponseBody
-    public JsonResponse deleteById(@PathVariable("id") Long id) throws Exception {
-        userService.removeById(id);
-        return JsonResponse.success(null);
-    }
-
-
-    /**
-    * 描述：根据Id 更新
-    *
-    */
-    @RequestMapping(value = "/{id}", method = RequestMethod.PUT)
-    @ResponseBody
-    public JsonResponse updateUser(@PathVariable("id") Long  id,User  user) throws Exception {
-        user.setId(id);
-        userService.updateById(user);
-        return JsonResponse.success(null);
-    }
-
-
-    /**
-    * 描述:创建User
-    *
-    */
-    @RequestMapping(value = "", method = RequestMethod.POST)
-    @ResponseBody
-    public JsonResponse create(User  user) throws Exception {
-        userService.save(user);
-        return JsonResponse.success(null);
-    }
 }
 

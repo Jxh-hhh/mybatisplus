@@ -42,7 +42,7 @@ public class BatchSettingController {
      * @param batchName 如第一行
      * @return 返回json数据
      */
-    @RequestMapping("/list")
+    @GetMapping("")
     public JsonResponse getBatchList(PageDTO page, String batchName) {
         Page<BatchSetting> list = batchSettingService.pageList(page, batchName);
         return JsonResponse.success(list);
@@ -53,7 +53,7 @@ public class BatchSettingController {
      * @param batchSetting 新建batch的信息
      * @return
      */
-    @PostMapping("/save")
+    @PostMapping("")
     public JsonResponse saveOneBatch(BatchSetting batchSetting){
         boolean save = batchSettingService.save(batchSetting);
         return JsonResponse.success(save);
@@ -64,7 +64,7 @@ public class BatchSettingController {
      * @param id
      * @return
      */
-    @DeleteMapping("/delete/{id}")
+    @DeleteMapping("/{id}")
     public JsonResponse deleteOneBatch(@PathVariable("id") String id) {
         return JsonResponse.success(batchSettingService.removeById(id));
     }
@@ -77,6 +77,16 @@ public class BatchSettingController {
     @DeleteMapping("/deletes")
     public JsonResponse deleteChosenBatch(@RequestParam("ids[]") List<Long> ids) {
         return JsonResponse.success(batchSettingService.removeByIds(ids));
+    }
+
+    /**
+     * 更新batch
+     * @param batchSetting
+     * @return
+     */
+    @PutMapping("")
+    public JsonResponse updateOneBatch(BatchSetting batchSetting) {
+        return JsonResponse.success(batchSettingService.updateById(batchSetting));
     }
 
 }
