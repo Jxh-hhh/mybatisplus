@@ -355,7 +355,7 @@
                     success: function (res) {
                         if(res.data){
                             $.each(res.data, function (index, item){
-                                $("#difficultySelect").append(new Option(item.itemName, item.itemName));
+                                $("#difficultySelect").append(new Option(item.itemName, item.itemValue));
                             })
                             form.render('select');
                         }

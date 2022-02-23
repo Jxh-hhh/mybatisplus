@@ -21,6 +21,10 @@ public class IndexController {
     public String batchList() {
         return "/pages/batch_list";
     }
+    @RequestMapping("/clothAdd")
+    public String clothAdd(){
+        return "/pages/cloth_add";
+    }
     @RequestMapping("/auto")
     public String auto(){
         return "/views/component/table/auto";

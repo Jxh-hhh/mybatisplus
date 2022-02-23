@@ -9,6 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
@@ -33,7 +34,7 @@ public class FileController {
     }
 
     @ApiOperation(value = "文件上传", notes = "文件上传")
-    @RequestMapping(value = "/upload", method = RequestMethod.POST)
+    @PostMapping(value = "/upload")
     public ResponseEntity<Map<String, String>> upload(MultipartFile file, HttpServletRequest request) throws IOException {
         Map<String, String> map = new HashMap();
         if (SecurityUtils.getCurrentUserInfo() == null) {
@@ -43,6 +44,19 @@ public class FileController {
         map = fileService.upload(file);
         return ResponseEntity.ok().body(map);
     }
+
+    @PostMapping(value = "/uploadImg")
+    public Map uploadImg(MultipartFile file, HttpServletRequest request) throws IOException{
+        Map upload = fileService.upload(file);
+        Map<String, Object> map = new HashMap<>();
+        Map<String, Object> map2 = new HashMap<>();
+        map.put("code", 0);
+        map.put("msg", "上传成功");
+        map2.put("src", upload.get("url"));
+        map.put("data", map2);
+        return map;
+    }
+
 
     private static String suffix(String fileName) {
         int i = fileName.lastIndexOf('.');

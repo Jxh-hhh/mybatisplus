@@ -25,40 +25,47 @@ public class FileServiceImpl implements FileService {
 
     private static final SimpleDateFormat SDF = new SimpleDateFormat("yyyyMM");
 
-
+    @Value("${file-upload-path}")
+    private String fileUploadPath;
 
     @Override
     public Map upload(MultipartFile file) throws IOException {
-        Map<String, String> map = storeFile(file);
+        Map<String, String> map = storeFile(file, Paths.get(fileUploadPath, "image").toString());
         return map;
     }
 
-    private static Map<String, String> storeFile(MultipartFile file) throws IOException {
-        File path = null;
+    private static Map<String, String> storeFile(MultipartFile file, String fileUploadPath) throws IOException {
+
+        String yearMonth = SDF.format(new Date());//当前年月
+        String random = UUID.randomUUID().toString().replaceAll("-","");//xxxx-xxxx-xxxx
+        String fileName = file.getOriginalFilename();//文件全名
+        String suffix = suffix(fileName);//文件后缀
+        //    /image/202111/-789.png
+        String relPath = "/" + yearMonth + "/" + "-" + random + suffix;
+        String toPath = fileUploadPath + relPath;
+        FileOutputStream out = null;
+
+        File toFile = new File(toPath).getParentFile();
+        if (!toFile.exists()) {
+            toFile.mkdirs(); //自动创建目录
+        }
         try {
-            path = new File(ResourceUtils.getURL("classpath:").getPath());
-            File upload = new File(path.getAbsolutePath(),"static/img/");
-            String yearMonth = SDF.format(new Date());//当前年月
-            String fileName = file.getOriginalFilename();//文件全名
-            File parentDir = new File(upload.getAbsolutePath()+"/" + yearMonth);
-            if(!upload.exists()){
-                upload.mkdirs();
-            }
-            if(!parentDir.exists()){
-                parentDir.mkdirs();
-            }
-            String suffix = suffix(fileName);//文件后缀
-            String relPath = "/" + yearMonth + "/" + "-" + UUID.randomUUID().toString().replaceAll("-","") + suffix;
-            File fileUp = new File(upload.getAbsolutePath()+ relPath);
-            file.transferTo(fileUp);
+            out = new FileOutputStream(toPath);
+            out.write(file.getBytes());
+            out.flush();
             Map<String, String> map = new HashMap();
-            map.put("url", "/img" + relPath);
+            map.put("url", "/image" + relPath);
+            map.put("name", fileName);
             log.info(relPath);
             return map;
-        } catch (FileNotFoundException e) {
-            throw e;
-        } catch (IOException e) {
-            throw e;
+        } catch (FileNotFoundException fnfe) {
+            throw fnfe;
+        } catch (IOException ioe) {
+            throw ioe;
+        } finally {
+            if (out != null) {
+                out.close();
+            }
         }
     }
 
@@ -69,4 +76,5 @@ public class FileServiceImpl implements FileService {
         int i = fileName.lastIndexOf('.');
         return i == -1 ? "" : fileName.substring(i);
     }
+
 }
