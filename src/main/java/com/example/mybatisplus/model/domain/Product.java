@@ -58,6 +58,20 @@ public class Product extends Model<Product> {
             @ApiModelProperty(value = "更新时间")
     private LocalDateTime gmtModified;
 
+    public Product(Product product) {
+        this.id = product.getId();
+        this.name = product.getName();
+        this.productNumber = product.getProductNumber();
+        this.batchId = product.getBatchId();
+        this.gender = product.getGender();
+        this.description = product.getDescription();
+        this.isDeleted = product.getIsDeleted();
+        this.gmtCreated = product.getGmtCreated();
+        this.gmtModified = product.getGmtModified();
+    }
+
+    public Product() {
+    }
 
     @Override
     protected Serializable pkVal() {

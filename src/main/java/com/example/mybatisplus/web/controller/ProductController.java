@@ -1,6 +1,9 @@
 package com.example.mybatisplus.web.controller;
 
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.example.mybatisplus.model.dto.PageDTO;
 import com.example.mybatisplus.model.dto.ProductDTO;
+import com.example.mybatisplus.vo.ProductVO;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.stereotype.Controller;
 import org.slf4j.Logger;
@@ -34,6 +37,12 @@ public class ProductController {
     public JsonResponse save(@RequestBody ProductDTO productDTO){
         productService.insert(productDTO);
         return JsonResponse.success(null);
+    }
+
+    @GetMapping("/list")
+    public JsonResponse list(PageDTO pageDTO, Product product) {
+        Page<ProductVO> list = productService.pVOlist(pageDTO, product);
+        return JsonResponse.success(list);
     }
 
 }

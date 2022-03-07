@@ -21,6 +21,10 @@ public class IndexController {
     public String batchList() {
         return "/pages/batch_list";
     }
+    @RequestMapping("/productList")
+    public String productList() {
+        return "/pages/product_list";
+    }
     @RequestMapping("/clothAdd")
     public String clothAdd(){
         return "/pages/cloth_add";

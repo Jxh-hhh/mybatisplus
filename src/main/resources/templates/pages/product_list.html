@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>轮播</title>
+  <meta name="renderer" content="webkit">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=0">
+  <link rel="stylesheet" href="/layuiadmin/layui/css/layui.css" media="all">
+  <link rel="stylesheet" href="/layuiadmin/style/admin.css" media="all">
+</head>
+<body>
+
+  <div class="layui-card layadmin-header">
+    <div class="layui-breadcrumb" lay-filter="breadcrumb">
+      <a lay-href="">主页</a>
+      <a><cite>组件</cite></a>
+      <a><cite>轮播</cite></a>
+    </div>
+  </div>
+  
+  <div class="layui-fluid" id="LAY-demo-carousel">
+    <div class="layui-row layui-col-space15">
+      <div class="layui-col-xs2">
+        <div class="layui-card">
+          <div class="layui-card-body">
+            <div class="layui-carousel" id="test-carousel-normal" lay-filter="test-carousel-normal">
+              <div carousel-item="">
+                <img src="/image/202202/-c75580561aea488fb530d659d7587795.jpeg">
+                <img src="/image/202202/-d925f48c35414c6fa90dcdd3ce1fd95b.jpeg">
+              </div>
+            </div>
+            <div class="layui-text-center">
+              <span class="layui-text">款式</span><br>
+              <span class="layui-text">编码</span>
+            </div>
+            <div class="layui-btn-group">
+              <button type="button" class="layui-btn layui-btn-normal">原始</button>
+              <button type="button" class="layui-btn layui-btn-primary layui-border-blue">修改</button>
+              <button type="button" class="layui-btn layui-btn-danger">删除</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="layui-col-xs2">
+        <div class="layui-card">
+          <div class="layui-card-body">
+            <div class="layui-carousel" id="test-carousel-normal2" lay-filter="test-carousel-normal">
+              <div carousel-item="">
+                <img src="/image/202202/-c75580561aea488fb530d659d7587795.jpeg">
+                <img src="/image/202202/-d925f48c35414c6fa90dcdd3ce1fd95b.jpeg">
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <script src="/layuiadmin/layui/layui.js"></script>
+  <script>
+  layui.config({
+    base: '/layuiadmin/' //静态资源所在路径
+  }).extend({
+    index: 'lib/index' //主入口模块
+  }).use(['index', 'carousel', 'form'], function(){
+    var carousel = layui.carousel
+    ,form = layui.form;
+  
+    //常规轮播
+    carousel.render({
+      elem: '#test-carousel-normal'
+      ,arrow: 'always'
+      ,width: '100%'
+      ,indicator: 'none'
+      ,autoplay: 'true'
+    });
+
+    carousel.render({
+      elem: '#test-carousel-normal2'
+      ,arrow: 'always'
+      ,width: '100%'
+    });
+  
+  });
+  </script>
+</body>
+</html>
